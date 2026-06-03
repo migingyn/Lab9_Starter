@@ -8,8 +8,13 @@
   <title>Lab 9</title>
 
   <!-- TrackJS error monitoring — must load before any other scripts -->
-  <script type="text/javascript">window._trackJs = { token: "lab9" };</script>
-  <script type="text/javascript" src="https://cdn.trackjs.com/agent/v3/latest/t.js"></script>
+  <script src="https://cdn.trackjs.com/agent/v3/latest/t.js"></script>
+  <script>
+    window.TrackJS && TrackJS.install({
+      token: "63621b41da4b419bbc51d921db7467bb"
+    });
+    window.TrackJS && TrackJS.track('Testing TrackJS!');
+  </script>
 
   <style>
     button {
