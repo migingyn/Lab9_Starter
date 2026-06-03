@@ -1,12 +1,25 @@
-// Custom error types for the calculator
-class InvalidInputError extends Error {
+class CalculatorError extends Error {
   constructor(message) {
     super(message);
-    this.name = 'InvalidInputError';
+    this.name = 'CalculatorError';
   }
 }
 
-class DivisionByZeroError extends Error {
+// Carries extra context: which field was bad and what value it held.
+class InvalidInputError extends CalculatorError {
+  constructor(field, value) {
+    const reason = value.trim() === ''
+      ? `"${field}" cannot be empty`
+      : `"${value}" is not a valid number for "${field}"`;
+    super(reason);
+    this.name = 'InvalidInputError';
+    this.field = field;   // which input caused the problem
+    this.value = value;   // the offending raw string
+  }
+}
+
+// No extra data needed beyond the name and message.
+class DivisionByZeroError extends CalculatorError {
   constructor() {
     super('Cannot divide by zero');
     this.name = 'DivisionByZeroError';
@@ -14,16 +27,16 @@ class DivisionByZeroError extends Error {
 }
 
 function calculate(first, operator, second) {
-  if (first.trim() === '' || second.trim() === '') {
-    throw new InvalidInputError('Both fields must be filled in');
+  // Validate each field individually so the error knows which one is bad
+  if (first.trim() === '' || isNaN(Number(first))) {
+    throw new InvalidInputError('first number', first);
+  }
+  if (second.trim() === '' || isNaN(Number(second))) {
+    throw new InvalidInputError('second number', second);
   }
 
   const a = Number(first);
   const b = Number(second);
-
-  if (isNaN(a) || isNaN(b)) {
-    throw new InvalidInputError(`"${isNaN(a) ? first : second}" is not a valid number`);
-  }
 
   if (operator === '/' && b === 0) {
     throw new DivisionByZeroError();
@@ -50,18 +63,24 @@ form.addEventListener('submit', e => {
     output.textContent = result;
     output.style.color = '';
   } catch (err) {
-    if (err instanceof DivisionByZeroError) {
+    // instanceof walks the prototype chain, so both subtypes also match CalculatorError
+    if (err instanceof InvalidInputError) {
+      // Access the extra properties only InvalidInputError carries
       output.textContent = `[${err.name}] ${err.message}`;
-    } else if (err instanceof InvalidInputError) {
+      console.warn(`Bad field: "${err.field}", received value: "${err.value}"`);
+    } else if (err instanceof DivisionByZeroError) {
       output.textContent = `[${err.name}] ${err.message}`;
+    } else if (err instanceof CalculatorError) {
+      // Catch-all for any future CalculatorError subclass we haven't handled yet
+      output.textContent = `[Calculator error] ${err.message}`;
     } else {
-      // Re-throw anything truly unexpected so it surfaces as a real error
+      // Truly unexpected — re-throw so the browser surfaces it properly
       throw err;
     }
     output.style.color = 'red';
     console.error(err);
   } finally {
-    // Runs whether calculation succeeded or failed
+    // Runs whether the calculation succeeded or failed
     console.log(`Calculation attempted: "${firstNum}" ${operator} "${secondNum}"`);
   }
 });
