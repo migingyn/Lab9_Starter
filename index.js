@@ -85,6 +85,13 @@ form.addEventListener('submit', e => {
   }
 });
 
+// Global error handler — catches uncaught errors that escape all try/catch blocks
+window.onerror = function(message, source, lineno, colno, error) {
+  console.log(`[window.onerror] Caught global error: "${message}" at ${source}:${lineno}:${colno}`);
+  console.error(error);
+  return true; // suppress the browser's default red-console output
+};
+
 let errorBtns = Array.from(document.querySelectorAll('#error-btns > button'));
 
 const sampleData = [
@@ -170,4 +177,9 @@ errorBtns[13].addEventListener('click', () => {
   function inner() { console.trace('Console Trace demo'); }
   function outer() { inner(); }
   outer();
+});
+
+// Trigger a Global Error — no try/catch, so window.onerror picks it up
+errorBtns[14].addEventListener('click', () => {
+  null.triggerGlobalError(); // TypeError: cannot read properties of null
 });
