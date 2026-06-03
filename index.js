@@ -1,11 +1,69 @@
+// Custom error types for the calculator
+class InvalidInputError extends Error {
+  constructor(message) {
+    super(message);
+    this.name = 'InvalidInputError';
+  }
+}
+
+class DivisionByZeroError extends Error {
+  constructor() {
+    super('Cannot divide by zero');
+    this.name = 'DivisionByZeroError';
+  }
+}
+
+function calculate(first, operator, second) {
+  if (first.trim() === '' || second.trim() === '') {
+    throw new InvalidInputError('Both fields must be filled in');
+  }
+
+  const a = Number(first);
+  const b = Number(second);
+
+  if (isNaN(a) || isNaN(b)) {
+    throw new InvalidInputError(`"${isNaN(a) ? first : second}" is not a valid number`);
+  }
+
+  if (operator === '/' && b === 0) {
+    throw new DivisionByZeroError();
+  }
+
+  switch (operator) {
+    case '+': return a + b;
+    case '-': return a - b;
+    case '*': return a * b;
+    case '/': return a / b;
+  }
+}
+
 let form = document.querySelector('form');
 form.addEventListener('submit', e => {
   e.preventDefault();
-  let output = document.querySelector('output');
-  let firstNum = document.querySelector('#first-num').value;
-  let secondNum = document.querySelector('#second-num').value;
-  let operator = document.querySelector('#operator').value;
-  output.innerHTML = eval(`${firstNum} ${operator} ${secondNum}`);
+  const output = document.querySelector('output');
+  const firstNum = document.querySelector('#first-num').value;
+  const secondNum = document.querySelector('#second-num').value;
+  const operator = document.querySelector('#operator').value;
+
+  try {
+    const result = calculate(firstNum, operator, secondNum);
+    output.textContent = result;
+    output.style.color = '';
+  } catch (err) {
+    if (err instanceof DivisionByZeroError) {
+      output.textContent = `[${err.name}] ${err.message}`;
+    } else if (err instanceof InvalidInputError) {
+      output.textContent = `[${err.name}] ${err.message}`;
+    } else {
+      // Re-throw anything truly unexpected so it surfaces as a real error
+      throw err;
+    }
+    output.style.color = 'red';
+    console.error(err);
+  } finally {
+    // Runs whether calculation succeeded or failed
+    console.log(`Calculation attempted: "${firstNum}" ${operator} "${secondNum}"`);
+  }
 });
 
 let errorBtns = Array.from(document.querySelectorAll('#error-btns > button'));
